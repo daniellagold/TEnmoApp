@@ -6,8 +6,9 @@ import java.math.BigDecimal;
 
 public interface AccountDao {
    boolean createAccount(int userId, BigDecimal balance);
-   Account getAccount (int userId);
-   BigDecimal getBalance (int accountId);
+   BigDecimal getBalance (int userId);
+   void updateBalance (int userId, BigDecimal newBalance);
+   int getAccountIdFromUsername(String username);
 
 
 }
