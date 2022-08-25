@@ -1,6 +1,7 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Account;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.sql.In;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -11,9 +12,13 @@ import java.math.BigDecimal;
 @Component
 public class JdbcAccountDao implements AccountDao{
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private JdbcUserDao jdbcUserDao;
 
-    public JdbcAccountDao(JdbcTemplate jdbcTemplate) {
+
+    public JdbcAccountDao(JdbcTemplate jdbcTemplate, JdbcUserDao jdbcUserDao) {
         this.jdbcTemplate = jdbcTemplate;
+        this.jdbcUserDao = jdbcUserDao;
     }
 
     @Override
@@ -32,22 +37,30 @@ public class JdbcAccountDao implements AccountDao{
 
     @Override
     public int getAccountIdFromUsername(String username){
+        Integer userId = jdbcUserDao.findIdByUsername(username);
+        System.out.println(userId);
         String sql = "SELECT account_id FROM account " +
-                "JOIN tenmo_user ON account.user_id = tenmo_user.user_id " +
-                "WHERE username = ?";
-        Integer id = jdbcTemplate.queryForObject(sql, Integer.class, username);
-//        if (id != null) {
-//            return id;
-//        } else {
-//            return -1;
-//        }
-        return id;
+                "WHERE user_id = ?";
+        Integer accountId = jdbcTemplate.queryForObject(sql, Integer.class, userId);
+        if (accountId != null) {
+            return accountId;
+        } else {
+            return -1;
+        }
+    }
+
+    @Override
+    public BigDecimal getBalanceByAccountId(int accountId) {
+        BigDecimal balance = BigDecimal.valueOf(0.00);
+        String sql = "SELECT balance FROM account WHERE account_id = ?";
+        balance = jdbcTemplate.queryForObject(sql, BigDecimal.class, accountId);
+        return balance;
     }
 
 
     @Override
     public BigDecimal getBalance(int userId) {
-        BigDecimal balance = new BigDecimal(0.00);
+        BigDecimal balance = BigDecimal.valueOf(0.00);
         String sql = "SELECT balance FROM account WHERE user_id = ?";
         balance = jdbcTemplate.queryForObject(sql, BigDecimal.class, userId);
 

@@ -4,6 +4,7 @@ import com.techelevator.tenmo.dao.JdbcAccountDao;
 import com.techelevator.tenmo.dao.JdbcTransferDAO;
 import com.techelevator.tenmo.dao.UserDao;
 import com.techelevator.tenmo.model.Transfer;
+import com.techelevator.tenmo.model.TransferDto;
 import com.techelevator.tenmo.model.Username;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,8 +29,10 @@ public class TenmoController {
     private JdbcTransferDAO jdbcTransferDAO;
 
 
-    public TenmoController(UserDao userDao) {
+    public TenmoController(UserDao userDao, JdbcAccountDao jdbcAccountDao, JdbcTransferDAO jdbcTransferDAO) {
         this.userDao = userDao;
+        this.jdbcAccountDao = jdbcAccountDao;
+        this.jdbcTransferDAO = jdbcTransferDAO;
     }
 
 
@@ -48,14 +51,17 @@ public class TenmoController {
 
     //THIS IS NOT WORKING...not returning id in the getAccountIdFromUsername...but the sql statement works fine.
     @RequestMapping(path = "/send/transfer", method = RequestMethod.POST)
-    public boolean sendMoney(@Valid Principal principal, @RequestBody String username, BigDecimal amount){
-        int accountTo = jdbcAccountDao.getAccountIdFromUsername(username);
-        int accountFrom = jdbcAccountDao.getAccountIdFromUsername(principal.getName());
-        jdbcTransferDAO.subtractFrom(accountFrom, amount);
-        //put add method here as well
-        Transfer transfer = new Transfer(1, accountTo, accountFrom, amount, "Approved", "Send");
-        return jdbcTransferDAO.createTransfer(transfer);
+    public boolean sendMoney(@Valid Principal principal, @RequestBody TransferDto transferDto){
 
+        int accountTo = jdbcAccountDao.getAccountIdFromUsername(transferDto.getUsernameTo());
+        int accountFrom = jdbcAccountDao.getAccountIdFromUsername(principal.getName());
+        if (jdbcTransferDAO.subtractFrom(accountFrom, transferDto.getAmount()) == false){
+          return false;
+             } else {
+          jdbcTransferDAO.addTo(accountTo, transferDto.getAmount());
+          Transfer transfer = new Transfer(1, accountTo, accountFrom, transferDto.getAmount(), "Approved", "Send");
+          return jdbcTransferDAO.createTransfer(transfer);
+      }
     }
 
 }
