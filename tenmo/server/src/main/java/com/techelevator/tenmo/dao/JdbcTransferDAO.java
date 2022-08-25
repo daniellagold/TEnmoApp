@@ -3,9 +3,13 @@ package com.techelevator.tenmo.dao;
 import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.Transfer;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 public class JdbcTransferDAO implements TransferDAO{
     private JdbcTemplate jdbcTemplate;
@@ -52,4 +56,40 @@ public class JdbcTransferDAO implements TransferDAO{
         }
         return success;
     }
+
+    @Override
+    public List<Transfer> getTransfersForUser(int accountId) {
+        List<Transfer> transferList = new ArrayList<>();
+        String sql = "SELECT * FROM transfer WHERE account_to = ? OR account_from = ?";
+        SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, accountId, accountId);
+        while (rowSet.next()){
+            Transfer transfer = mapRowToTransfer(rowSet);
+            transferList.add(transfer);
+        }
+        return transferList;
+    }
+
+    @Override
+    public Transfer getTransferByTransferId(int transferId, int accountId) {
+        Transfer transfer = new Transfer();
+        String sql = "SELECT * FROM transfer WHERE transfer_id = ? AND (account_to = ? OR account_from = ?)";
+        SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, transferId, accountId, accountId);
+        if (rowSet.next()){
+            transfer = mapRowToTransfer(rowSet);
+        }
+        return transfer;
+    }
+
+    public Transfer mapRowToTransfer(SqlRowSet rowSet){
+        Transfer transfer = new Transfer();
+        transfer.setTransferId(rowSet.getInt("transfer_id"));
+        transfer.setAccountTo(rowSet.getInt("account_to"));
+        transfer.setAccountFrom(rowSet.getInt("account_from"));
+        transfer.setAmount(rowSet.getBigDecimal("amount"));
+        transfer.setTransferStatus(rowSet.getString("transfer_status"));
+        transfer.setTransferType(rowSet.getString("transfer_type"));
+        return transfer;
+    }
+
+
 }

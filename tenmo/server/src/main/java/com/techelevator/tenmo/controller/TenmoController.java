@@ -5,6 +5,7 @@ import com.techelevator.tenmo.dao.JdbcTransferDAO;
 import com.techelevator.tenmo.dao.UserDao;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.TransferDto;
+import com.techelevator.tenmo.model.TransferIdDTO;
 import com.techelevator.tenmo.model.Username;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -55,13 +56,39 @@ public class TenmoController {
 
         int accountTo = jdbcAccountDao.getAccountIdFromUsername(transferDto.getUsernameTo());
         int accountFrom = jdbcAccountDao.getAccountIdFromUsername(principal.getName());
-        if (jdbcTransferDAO.subtractFrom(accountFrom, transferDto.getAmount()) == false){
-          return false;
-             } else {
-          jdbcTransferDAO.addTo(accountTo, transferDto.getAmount());
-          Transfer transfer = new Transfer(1, accountTo, accountFrom, transferDto.getAmount(), "Approved", "Send");
-          return jdbcTransferDAO.createTransfer(transfer);
-      }
+        if (!transferDto.getUsernameTo().equals(principal.getName()) && transferDto.getAmount().compareTo(BigDecimal.valueOf(0.00)) == 1){
+            if (jdbcTransferDAO.subtractFrom(accountFrom, transferDto.getAmount()) == false){
+                return false;
+            } else {
+                jdbcTransferDAO.addTo(accountTo, transferDto.getAmount());
+                String transferStatus = "Approved";
+                String transferType = "Send";
+
+                if (principal.getName().equals(transferDto.getUsernameFrom())){
+                    transferType = "Send";
+                } else {
+                    transferType = "Receive";
+                }
+                Transfer transfer = new Transfer(1, accountTo, accountFrom, transferDto.getAmount(), "Approved", transferType);
+                return jdbcTransferDAO.createTransfer(transfer);
+        }
+      } else {
+            return false;
+        }
+    }
+
+    @RequestMapping(path = "/transfers", method = RequestMethod.GET)
+    public List<Transfer> getTransfersByUser(@Valid Principal principal){
+        int accountId = jdbcAccountDao.getAccountIdFromUsername(principal.getName());
+        List<Transfer> transferList = jdbcTransferDAO.getTransfersForUser(accountId);
+        return transferList;
+    }
+
+    @RequestMapping(path = "/transferDetails", method = RequestMethod.GET)
+    public Transfer getTransferByTransferId(@Valid Principal principal, @RequestBody TransferIdDTO transferIdDTO){
+        int accountId = jdbcAccountDao.getAccountIdFromUsername(principal.getName());
+        Transfer transfer = jdbcTransferDAO.getTransferByTransferId(transferIdDTO.getTransferId(), accountId);
+        return transfer;
     }
 
 }
