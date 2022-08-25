@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface TransferDAO {
-    boolean subtractFrom(int userId, BigDecimal amount);
+    String subtractFrom(int userId, BigDecimal amount);
     void addTo(int userId, BigDecimal amount);
     boolean createTransfer(Transfer transfer);
     List<Transfer> getTransfersForUser(int accountId);

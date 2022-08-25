@@ -1,6 +1,5 @@
 package com.techelevator.tenmo.dao;
 
-import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.Transfer;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -22,15 +21,15 @@ public class JdbcTransferDAO implements TransferDAO{
     }
 
     @Override
-    public boolean subtractFrom(int accountId, BigDecimal amount) {
-        boolean success = false;
+    public String subtractFrom(int accountId, BigDecimal amount) {
+
         if (amount.compareTo(jdbcAccountDao.getBalanceByAccountId(accountId))== 0 || amount.compareTo(jdbcAccountDao.getBalanceByAccountId(accountId))== -1 ){
             String sql = "UPDATE account SET balance = (balance - ?) WHERE account_id = ?";
             jdbcTemplate.update(sql, amount, accountId);
-            success = true;
-            return success;
+
+            return "Transaction Complete.";
         } else {
-            return success;
+            return "Error- There is not enough money in your account to complete transaction. ";
         }
 
     }
@@ -76,6 +75,8 @@ public class JdbcTransferDAO implements TransferDAO{
         SqlRowSet rowSet = jdbcTemplate.queryForRowSet(sql, transferId, accountId, accountId);
         if (rowSet.next()){
             transfer = mapRowToTransfer(rowSet);
+        } else {
+            throw new RuntimeException("Not authorized");
         }
         return transfer;
     }

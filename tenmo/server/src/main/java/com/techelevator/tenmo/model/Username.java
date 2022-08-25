@@ -5,6 +5,13 @@ public class Username {
     private int id;
     private String username;
 
+    public Username(){
+
+    }
+    public  Username (String username){
+        this.username = username;
+    }
+
     public int getId() {
         return id;
     }

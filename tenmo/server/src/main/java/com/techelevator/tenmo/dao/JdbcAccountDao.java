@@ -1,10 +1,12 @@
 package com.techelevator.tenmo.dao;
 
+import com.techelevator.tenmo.exceptions.UserDoesNotExist;
 import com.techelevator.tenmo.model.Account;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.sql.In;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -36,8 +38,13 @@ public class JdbcAccountDao implements AccountDao{
     }
 
     @Override
-    public int getAccountIdFromUsername(String username){
-        Integer userId = jdbcUserDao.findIdByUsername(username);
+    public int getAccountIdFromUsername(String username) throws UsernameNotFoundException {
+        Integer userId = null;
+        try {
+            userId = jdbcUserDao.findIdByUsername(username);
+        } catch (Exception e) {
+            throw new UsernameNotFoundException("User does not exist with provided username");
+        }
         System.out.println(userId);
         String sql = "SELECT account_id FROM account " +
                 "WHERE user_id = ?";
@@ -45,7 +52,7 @@ public class JdbcAccountDao implements AccountDao{
         if (accountId != null) {
             return accountId;
         } else {
-            return -1;
+            throw new UsernameNotFoundException("There is no user created for that username");
         }
     }
 

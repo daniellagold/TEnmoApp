@@ -14,7 +14,7 @@ public interface UserDao {
 
     int findIdByUsername(String username);
 
-    List<Username> getAllUsernamesLoggedIn(String usernameLoggedIn);
+    List<Username> getAllUsernamesLoggedIn(String usernameLoggedIn) throws Exception;
 
     boolean create(String username, String password);
 }

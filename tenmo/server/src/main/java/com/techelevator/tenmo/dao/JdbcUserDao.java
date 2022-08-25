@@ -26,12 +26,13 @@ public class JdbcUserDao implements UserDao {
 
     @Override
     public int findIdByUsername(String username) {
+        Integer id = null;
         String sql = "SELECT user_id FROM tenmo_user WHERE username ILIKE ?;";
-        Integer id = jdbcTemplate.queryForObject(sql, Integer.class, username);
+         id = jdbcTemplate.queryForObject(sql, Integer.class, username);
         if (id != null) {
             return id;
         } else {
-            return -1;
+        throw new RuntimeException();
         }
     }
 
@@ -66,6 +67,8 @@ public class JdbcUserDao implements UserDao {
         while (rowSet.next()){
             Username username = mapRowToUsername(rowSet);
             usernameList.add(username);
+        } if (usernameList.size()<1){
+            throw new RuntimeException("No other users");
         }
         return usernameList;
     }
