@@ -69,4 +69,16 @@ public class Transfer {
     public void setTransferType(String transferType) {
         this.transferType = transferType;
     }
+
+    @Override
+    public String toString() {
+        return "Transfer{" +
+                "transferId=" + transferId +
+                ", accountTo=" + accountTo +
+                ", accountFrom=" + accountFrom +
+                ", amount=" + amount +
+                ", transferStatus='" + transferStatus + '\'' +
+                ", transferType='" + transferType + '\'' +
+                '}';
+    }
 }

@@ -2,6 +2,7 @@ package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.User;
 import com.techelevator.tenmo.model.Username;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,8 +20,10 @@ import java.util.List;
 public class JdbcUserDao implements UserDao {
 
     private static BigDecimal startingBalance = new BigDecimal(1000.00);
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    public JdbcUserDao (){}
     public JdbcUserDao(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -32,7 +35,7 @@ public class JdbcUserDao implements UserDao {
             Integer id = jdbcTemplate.queryForObject(sql, Integer.class, username);
             return id;
         } catch (EmptyResultDataAccessException e){
-            return null;
+            return -1;
         }
     }
 

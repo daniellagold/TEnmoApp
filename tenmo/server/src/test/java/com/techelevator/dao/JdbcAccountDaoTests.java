@@ -1,7 +1,9 @@
 package com.techelevator.dao;
 
 import com.techelevator.tenmo.dao.JdbcAccountDao;
+import com.techelevator.tenmo.dao.JdbcTransferDAO;
 import com.techelevator.tenmo.dao.JdbcUserDao;
+import com.techelevator.tenmo.dao.TransferDAO;
 import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.TransferDto;
 import com.techelevator.tenmo.model.User;
@@ -20,13 +22,17 @@ public class JdbcAccountDaoTests extends BaseDaoTests {
 
     private JdbcAccountDao sut;
     private TransferDto transferDto = new TransferDto();
+    private JdbcTransferDAO jdbcTransferDAO;
 
 
 
     @Before
     public void setup() {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        sut = new JdbcAccountDao(jdbcTemplate);
+        jdbcTransferDAO = new JdbcTransferDAO(jdbcTemplate);
+        sut = new JdbcAccountDao(jdbcTemplate, jdbcTransferDAO);
+        jdbcTransferDAO.setAccountDao(sut);
+
 
     }
 
@@ -71,16 +77,28 @@ public class JdbcAccountDaoTests extends BaseDaoTests {
         Assert.assertTrue(expected.compareTo(actual) == 0);
     }
 
-//    @Test
-//    public void updateBalanceReturnsTransactionComplete(){
-//        transferDto.setAmount(BigDecimal.valueOf(100.00));
-//        transferDto.setUsernameFrom("bob");
-//        transferDto.setUsernameTo("user");
-//        String expected = "Transaction Complete";
-//        String actual = sut.updateBalance("bob", transferDto);
-//
-//        Assert.assertEquals(expected, actual);
-//    }
+    @Test
+    public void updateBalanceReturnsTransactionComplete(){
+        transferDto.setAmount(BigDecimal.valueOf(100.00));
+        transferDto.setUsernameFrom("bob");
+        transferDto.setUsernameTo("user");
+        String expected = "Transaction Complete.";
+        String actual = sut.updateBalance("bob", transferDto);
+
+        Assert.assertEquals(expected, actual);
+   }
+
+   @Test
+    public void updateBalanceReturnsNotEnoughMoney(){
+        transferDto.setAmount(BigDecimal.valueOf(2000.00));
+        transferDto.setUsernameFrom("bob");
+        transferDto.setUsernameTo("user");
+        String expected =  "Error- There is not enough money in your account to complete transaction. ";
+        String actual = sut.updateBalance("bob", transferDto);
+        Assert.assertEquals(expected, actual);
+   }
+
+
 
 
 

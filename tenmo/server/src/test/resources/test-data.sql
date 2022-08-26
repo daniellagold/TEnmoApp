@@ -32,6 +32,22 @@ CREATE TABLE account (
 	CONSTRAINT PK_account PRIMARY KEY (account_id),
 	CONSTRAINT FK_account_tenmo_user FOREIGN KEY (user_id) REFERENCES tenmo_user (user_id)
 );
+CREATE SEQUENCE seq_transfer_id
+  INCREMENT BY 1
+  START WITH 3001
+  NO MAXVALUE;
+
+CREATE TABLE transfer (
+	transfer_id int NOT NULL DEFAULT nextval('seq_transfer_id'),
+	account_to int NOT NULL,
+	account_from int NOT NULL,
+	amount decimal(13,2) CHECK (amount > 0),
+	transfer_status varchar(15),
+	transfer_type varchar(15),
+	CONSTRAINT PK_transfer PRIMARY KEY (transfer_id),
+	CONSTRAINT FK_transfer_account FOREIGN KEY (account_to) REFERENCES account (account_id),
+	CONSTRAINT FK_transfer_account2 FOREIGN KEY (account_from) REFERENCES account (account_id)
+);
 
 
 
@@ -42,5 +58,10 @@ VALUES ('bob', '$2a$10$G/MIQ7pUYupiVi72DxqHquxl73zfd7ZLNBoB2G6zUb.W16imI2.W2'),
 INSERT INTO account (user_id, balance)
 VALUES (1001, 1000.00),
        (1002, 1000.00);
+
+INSERT INTO transfer (account_to, account_from, amount, transfer_status, transfer_type)
+ VALUES (2002, 2001, 10.00, 'Approved', 'Send'),
+        (2002, 2001, 120.00, 'Approved', 'Send');
+
 
 COMMIT;

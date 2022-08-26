@@ -1,6 +1,7 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Transfer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
@@ -11,18 +12,33 @@ import java.util.List;
 
 @Component
 public class JdbcTransferDAO implements TransferDAO{
+    @Autowired
     private JdbcTemplate jdbcTemplate;
-    private JdbcAccountDao jdbcAccountDao;
+    @Autowired
+    private AccountDao accountDao;
 
+    public JdbcTransferDAO(){
+
+    }
 
     public JdbcTransferDAO(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    public JdbcTransferDAO(JdbcTemplate jdbcTemplate, AccountDao accountDao) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.accountDao = accountDao;
+    }
+
+
+    public void setAccountDao(AccountDao accountDao) {
+        this.accountDao = accountDao;
+    }
+
     @Override
     public String subtractFrom(int accountId, BigDecimal amount) {
 
-        if (amount.compareTo(jdbcAccountDao.getBalanceByAccountId(accountId))== 0 || amount.compareTo(jdbcAccountDao.getBalanceByAccountId(accountId))== -1 ){
+        if (amount.compareTo(accountDao.getBalanceByAccountId(accountId))== 0 || amount.compareTo(accountDao.getBalanceByAccountId(accountId))== -1 ){
             String sql = "UPDATE account SET balance = (balance - ?) WHERE account_id = ?";
             jdbcTemplate.update(sql, amount, accountId);
 
@@ -37,9 +53,10 @@ public class JdbcTransferDAO implements TransferDAO{
     public boolean addTo(int accountId, BigDecimal amount) {
         boolean success = false;
         String sql = "SELECT account_id FROM account WHERE account_id = ?";
+        String sql2 = "UPDATE account SET balance = balance + ? WHERE account_id = ?";
         try {
             Integer account = jdbcTemplate.queryForObject(sql, Integer.class, accountId);
-            jdbcTemplate.update(sql, amount, account);
+            jdbcTemplate.update(sql2, amount, account);
             success = true;
             return success;
         } catch (Exception e){

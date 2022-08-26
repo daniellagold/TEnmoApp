@@ -16,15 +16,26 @@ import java.security.Principal;
 
 @Component
 public class JdbcAccountDao implements AccountDao{
-    private JdbcTemplate jdbcTemplate;
     @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private JdbcUserDao jdbcUserDao;
     @Autowired
-    private JdbcTransferDAO jdbcTransferDAO;
+    private TransferDAO transferDAO;
 
+    public JdbcAccountDao(){}
 
     public JdbcAccountDao(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public JdbcAccountDao(JdbcTemplate jdbcTemplate, TransferDAO transferDAO) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.transferDAO = transferDAO;
+    }
+
+    public void setTransferDAO(TransferDAO transferDAO) {
+        this.transferDAO = transferDAO;
     }
 
     @Override
@@ -91,10 +102,10 @@ public class JdbcAccountDao implements AccountDao{
         }
 
         if (!transferDto.getUsernameTo().equals(username) && transferDto.getAmount().compareTo(BigDecimal.valueOf(0.00)) == 1){
-            if (jdbcTransferDAO.subtractFrom(accountFrom, transferDto.getAmount()).equals("Error- There is not enough money in your account to complete transaction. ")){
+            if (transferDAO.subtractFrom(accountFrom, transferDto.getAmount()).equals("Error- There is not enough money in your account to complete transaction. ")){
                 return "Error- There is not enough money in your account to complete transaction. ";
             } else {
-                jdbcTransferDAO.addTo(accountTo, transferDto.getAmount());
+                transferDAO.addTo(accountTo, transferDto.getAmount());
                 String transferStatus = "Approved";
                 String transferType = "Send";
 
@@ -105,7 +116,7 @@ public class JdbcAccountDao implements AccountDao{
                     transferType = "Send";
                 }
                 Transfer transfer = new Transfer(1, accountTo, accountFrom, transferDto.getAmount(), "Approved", transferType);
-                jdbcTransferDAO.createTransfer(transfer);
+                transferDAO.createTransfer(transfer);
                 return "Transaction Complete.";
             }
         } else {
