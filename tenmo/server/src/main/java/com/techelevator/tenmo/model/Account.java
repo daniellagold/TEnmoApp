@@ -7,6 +7,9 @@ public class Account {
     private int userId;
     private BigDecimal balance;
 
+    public Account(int userId, BigDecimal valueOf) {
+    }
+
     public int getAccountId() {
         return accountId;
     }

@@ -1,26 +1,30 @@
 package com.techelevator.tenmo.dao;
 
-import com.techelevator.tenmo.exceptions.UserDoesNotExist;
-import com.techelevator.tenmo.model.Account;
+import com.techelevator.tenmo.model.Transfer;
+import com.techelevator.tenmo.model.TransferDto;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.relational.core.sql.In;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Null;
 import java.math.BigDecimal;
+import java.security.Principal;
 
 @Component
 public class JdbcAccountDao implements AccountDao{
     private JdbcTemplate jdbcTemplate;
     @Autowired
     private JdbcUserDao jdbcUserDao;
+    @Autowired
+    private JdbcTransferDAO jdbcTransferDAO;
 
 
-    public JdbcAccountDao(JdbcTemplate jdbcTemplate, JdbcUserDao jdbcUserDao) {
+    public JdbcAccountDao(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.jdbcUserDao = jdbcUserDao;
     }
 
     @Override
@@ -38,21 +42,21 @@ public class JdbcAccountDao implements AccountDao{
     }
 
     @Override
-    public int getAccountIdFromUsername(String username) throws UsernameNotFoundException {
+    public Integer getAccountIdFromUsername(String username) {
         Integer userId = null;
         try {
-            userId = jdbcUserDao.findIdByUsername(username);
+            String sql = "SELECT user_id FROM tenmo_user WHERE username ILIKE ?;";
+            userId = jdbcTemplate.queryForObject(sql, Integer.class, username);
         } catch (Exception e) {
-            throw new UsernameNotFoundException("User does not exist with provided username");
+            throw new NullPointerException("User does not exist with provided username");
         }
-        System.out.println(userId);
         String sql = "SELECT account_id FROM account " +
                 "WHERE user_id = ?";
-        Integer accountId = jdbcTemplate.queryForObject(sql, Integer.class, userId);
-        if (accountId != null) {
+        try {
+            Integer accountId = jdbcTemplate.queryForObject(sql, Integer.class, userId);
             return accountId;
-        } else {
-            throw new UsernameNotFoundException("There is no user created for that username");
+        } catch (EmptyResultDataAccessException e){
+            return null;
         }
     }
 
@@ -60,8 +64,12 @@ public class JdbcAccountDao implements AccountDao{
     public BigDecimal getBalanceByAccountId(int accountId) {
         BigDecimal balance = BigDecimal.valueOf(0.00);
         String sql = "SELECT balance FROM account WHERE account_id = ?";
-        balance = jdbcTemplate.queryForObject(sql, BigDecimal.class, accountId);
-        return balance;
+        try {
+            balance = jdbcTemplate.queryForObject(sql, BigDecimal.class, accountId);
+            return balance;
+        } catch (EmptyResultDataAccessException e){
+            return BigDecimal.valueOf(0.00);
+        }
     }
 
 
@@ -75,7 +83,34 @@ public class JdbcAccountDao implements AccountDao{
     }
 
     @Override
-    public void updateBalance(int userId, BigDecimal newBalance) {
+    public String updateBalance(String username, TransferDto transferDto) {
+        Integer accountTo = getAccountIdFromUsername(transferDto.getUsernameTo());
+        Integer accountFrom = getAccountIdFromUsername(username);
+        if (accountTo == null){
+            return "Error-- User doesn't exist";
+        }
+
+        if (!transferDto.getUsernameTo().equals(username) && transferDto.getAmount().compareTo(BigDecimal.valueOf(0.00)) == 1){
+            if (jdbcTransferDAO.subtractFrom(accountFrom, transferDto.getAmount()).equals("Error- There is not enough money in your account to complete transaction. ")){
+                return "Error- There is not enough money in your account to complete transaction. ";
+            } else {
+                jdbcTransferDAO.addTo(accountTo, transferDto.getAmount());
+                String transferStatus = "Approved";
+                String transferType = "Send";
+
+                //may change to just be "send" and user needs to read accountTo and accountFrom?
+                if (username.equals(transferDto.getUsernameTo())){
+                    transferType = "Receive";
+                } else {
+                    transferType = "Send";
+                }
+                Transfer transfer = new Transfer(1, accountTo, accountFrom, transferDto.getAmount(), "Approved", transferType);
+                jdbcTransferDAO.createTransfer(transfer);
+                return "Transaction Complete.";
+            }
+        } else {
+            return "Error";
+        }
 
     }
 }

@@ -3,6 +3,7 @@ package com.techelevator.tenmo.dao;
 import com.techelevator.tenmo.model.User;
 import com.techelevator.tenmo.model.Username;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,14 +26,13 @@ public class JdbcUserDao implements UserDao {
     }
 
     @Override
-    public int findIdByUsername(String username) {
-        Integer id = null;
+    public Integer findIdByUsername(String username) {
         String sql = "SELECT user_id FROM tenmo_user WHERE username ILIKE ?;";
-         id = jdbcTemplate.queryForObject(sql, Integer.class, username);
-        if (id != null) {
+        try {
+            Integer id = jdbcTemplate.queryForObject(sql, Integer.class, username);
             return id;
-        } else {
-        throw new RuntimeException();
+        } catch (EmptyResultDataAccessException e){
+            return null;
         }
     }
 

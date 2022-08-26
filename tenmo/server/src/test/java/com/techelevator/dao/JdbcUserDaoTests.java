@@ -49,8 +49,8 @@ public class JdbcUserDaoTests extends BaseDaoTests{
         int actual = sut.findIdByUsername("bob");
         int expected = 1001;
         Assert.assertEquals(expected, actual);
-
     }
+
     @Test
     public void findIdByUsernameReturnException(){
         Integer expected = -1;

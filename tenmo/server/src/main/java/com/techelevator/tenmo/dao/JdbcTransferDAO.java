@@ -15,9 +15,8 @@ public class JdbcTransferDAO implements TransferDAO{
     private JdbcAccountDao jdbcAccountDao;
 
 
-    public JdbcTransferDAO(JdbcTemplate jdbcTemplate, JdbcAccountDao jdbcAccountDao) {
+    public JdbcTransferDAO(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.jdbcAccountDao = jdbcAccountDao;
     }
 
     @Override
@@ -35,10 +34,18 @@ public class JdbcTransferDAO implements TransferDAO{
     }
 
     @Override
-    public void addTo(int accountId, BigDecimal amount) {
-        String sql = "UPDATE account SET balance = (balance + ?) WHERE account_id = ?";
-        jdbcTemplate.update(sql, amount, accountId);
-
+    public boolean addTo(int accountId, BigDecimal amount) {
+        boolean success = false;
+        String sql = "SELECT account_id FROM account WHERE account_id = ?";
+        try {
+            Integer account = jdbcTemplate.queryForObject(sql, Integer.class, accountId);
+            jdbcTemplate.update(sql, amount, account);
+            success = true;
+            return success;
+        } catch (Exception e){
+            success = false;
+            return success;
+        }
     }
 
     @Override

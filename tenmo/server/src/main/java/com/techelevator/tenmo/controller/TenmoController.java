@@ -55,29 +55,8 @@ public class TenmoController {
 
     @RequestMapping(path = "/send/transfer", method = RequestMethod.POST)
     public String sendMoney(@Valid Principal principal, @RequestBody TransferDto transferDto) throws UsernameNotFoundException {
-
-        int accountTo = jdbcAccountDao.getAccountIdFromUsername(transferDto.getUsernameTo());
-        int accountFrom = jdbcAccountDao.getAccountIdFromUsername(principal.getName());
-        if (!transferDto.getUsernameTo().equals(principal.getName()) && transferDto.getAmount().compareTo(BigDecimal.valueOf(0.00)) == 1){
-            if (jdbcTransferDAO.subtractFrom(accountFrom, transferDto.getAmount()).equals("Error- There is not enough money in your account to complete transaction. ")){
-                return "Error- There is not enough money in your account to complete transaction. ";
-            } else {
-                jdbcTransferDAO.addTo(accountTo, transferDto.getAmount());
-                String transferStatus = "Approved";
-                String transferType = "Send";
-
-                if (principal.getName().equals(transferDto.getUsernameFrom())){
-                    transferType = "Send";
-                } else {
-                    transferType = "Receive";
-                }
-                Transfer transfer = new Transfer(1, accountTo, accountFrom, transferDto.getAmount(), "Approved", transferType);
-                jdbcTransferDAO.createTransfer(transfer);
-                return "Transaction Complete.";
-        }
-      } else {
-            return "Error";
-        }
+        String username = principal.getName();
+        return jdbcAccountDao.updateBalance(username, transferDto);
     }
 
     @RequestMapping(path = "/transfers", method = RequestMethod.GET)

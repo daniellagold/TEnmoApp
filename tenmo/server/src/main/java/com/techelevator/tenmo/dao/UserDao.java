@@ -12,7 +12,7 @@ public interface UserDao {
 
     User findByUsername(String username);
 
-    int findIdByUsername(String username);
+    Integer findIdByUsername(String username);
 
     List<Username> getAllUsernamesLoggedIn(String usernameLoggedIn) throws Exception;
 
